@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sampling Methods Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7FA; --paper:#FFFFFF; --ink:#17212C; --muted:#586473; --line:#D5DCE4;
+  --gridline:rgba(31,78,121,.07); --accent:#1F4E79; --accent-ink:#FFFFFF; --tint:rgba(31,78,121,.07);
+  --g0:#0072B2; --g1:#E69F00; --g2:#009E73; --g3:#CC79A7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161D; --paper:#19202A; --ink:#E6ECF2; --muted:#9AA6B4; --line:#2E3845;
+    --gridline:rgba(160,190,230,.06); --accent:#8DB8E8; --accent-ink:#0E1620; --tint:rgba(141,184,232,.09);
+    --g0:#56B4E9; --g1:#F0B840; --g2:#2FBF8F; --g3:#E08BC0;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161D; --paper:#19202A; --ink:#E6ECF2; --muted:#9AA6B4; --line:#2E3845;
+  --gridline:rgba(160,190,230,.06); --accent:#8DB8E8; --accent-ink:#0E1620; --tint:rgba(141,184,232,.09);
+  --g0:#56B4E9; --g1:#F0B840; --g2:#2FBF8F; --g3:#E08BC0;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit;}
+body{
+  margin:0; color:var(--ink); background-color:var(--bg);
+  background-image:linear-gradient(var(--gridline) 1px,transparent 1px),linear-gradient(90deg,var(--gridline) 1px,transparent 1px);
+  background-size:24px 24px;
+  font-family:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  line-height:1.5;
+}
+.wrap{max-width:1140px;margin:0 auto;padding:2rem 1.25rem 3rem;}
+h1{font-size:clamp(1.8rem,3.4vw,2.6rem);line-height:1.08;margin:0 0 .45rem;letter-spacing:-.015em;}
+.lede{margin:0;color:var(--muted);max-width:62ch;font-size:1.06rem;}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;}
+
+.controls{display:flex;flex-wrap:wrap;gap:1rem 1.5rem;align-items:flex-end;margin:1.5rem 0 1.25rem;padding:1rem 1.1rem;background:var(--paper);border:1px solid var(--line);border-radius:14px;}
+.cap{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.3rem;}
+.select{position:relative;display:inline-block;}
+.select::after{content:"";position:absolute;right:.9rem;top:50%;width:.45rem;height:.45rem;border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateY(-70%) rotate(45deg);pointer-events:none;}
+select{font:inherit;font-size:1rem;padding:.55rem 2.4rem .55rem .75rem;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);appearance:none;-webkit-appearance:none;min-width:15.5rem;cursor:pointer;}
+.seg{border:0;padding:0;margin:0;min-width:0;}
+.seg legend{padding:0;font-size:.85rem;color:var(--muted);margin-bottom:.3rem;}
+.seg .opts{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;}
+.seg input{position:absolute;opacity:0;width:1px;height:1px;}
+.seg .opt{display:block;padding:.55rem .95rem;cursor:pointer;font-size:1rem;}
+.seg input:checked + .opt{background:var(--accent);color:var(--accent-ink);font-weight:700;}
+.seg input:focus-visible + .opt{outline:3px solid var(--accent);outline-offset:-3px;}
+.actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-left:auto;}
+button{font:inherit;font-size:1rem;padding:.6rem 1rem;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;}
+button:hover{border-color:var(--accent);}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700;}
+button.quiet{border-color:transparent;color:var(--muted);}
+button.quiet:hover{border-color:var(--line);}
+
+.layout{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:1.25rem;align-items:start;}
+.field-wrap{margin:0;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1rem;}
+#field{width:100%;max-width:100%;height:auto;display:block;}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem 1.1rem;font-size:.95rem;margin-top:.4rem;}
+.sw{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;margin-right:.4rem;vertical-align:-.05rem;}
+#note{margin:.8rem 0 0;padding:.7rem .85rem;border-left:3px solid var(--accent);background:var(--tint);border-radius:0 8px 8px 0;min-height:2.8rem;}
+
+aside{display:grid;gap:1.25rem;}
+aside section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.3rem 1.25rem;}
+h2{font-size:1.35rem;line-height:1.2;margin:0 0 .5rem;}
+h3{font-size:1rem;margin:1rem 0 .2rem;}
+aside p{margin:0;max-width:66ch;}
+
+.row{display:grid;grid-template-columns:8.6rem minmax(0,1fr) 4.4rem;gap:.8rem;align-items:center;margin:.7rem 0;}
+.rlabel{font-size:.97rem;white-space:nowrap;}
+.rlabel .pop{color:var(--muted);}
+.track{position:relative;height:1.15rem;background:var(--bg);border-radius:6px;}
+.bar{position:absolute;left:0;top:0;bottom:0;border-radius:6px;width:0;transition:width .5s cubic-bezier(.3,0,.2,1);}
+.tick{position:absolute;top:-.3rem;bottom:-.3rem;width:2px;margin-left:-1px;background:var(--ink);}
+.avg{position:absolute;top:50%;width:.72rem;height:.72rem;border:2px solid var(--ink);background:var(--paper);transform:translate(-50%,-50%) rotate(45deg);transition:left .5s;}
+.avg[hidden]{display:none;}
+.val{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2;}
+.val small{display:block;font-weight:400;color:var(--muted);font-size:.8rem;}
+.key{font-size:.87rem;color:var(--muted);margin-top:.8rem;}
+#verdict{margin-top:.8rem;}
+
+/* SVG population */
+.dot{transition:transform .8s cubic-bezier(.65,0,.25,1);}
+.dot .core{stroke:var(--paper);stroke-width:1.5;transition:opacity .35s;}
+.dot .ring{fill:none;stroke:var(--ink);stroke-width:2.5;opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(1.6);transition:opacity .25s,transform .3s;}
+.sampled .dot:not(.picked) .core{opacity:.17;}
+.dot.picked .ring{opacity:1;transform:scale(1);}
+.num{font-size:10px;font-weight:700;fill:#fff;stroke:rgba(0,0,0,.4);stroke-width:2px;paint-order:stroke;text-anchor:middle;dominant-baseline:central;opacity:0;pointer-events:none;transition:opacity .3s;}
+.show-nums .num{opacity:1;}
+.sampled.show-nums .dot:not(.picked) .num{opacity:.25;}
+#overlay .box{fill:var(--tint);stroke:var(--line);stroke-width:1.5;transition:stroke .3s;}
+#overlay .cbox.chosen .box{stroke:var(--ink);stroke-width:2.5;}
+.olabel{font-size:13px;font-weight:700;fill:var(--ink);}
+.olabel.small{font-size:12px;}
+.osub{font-size:11px;fill:var(--muted);}
+.researcher{fill:var(--ink);}
+.reach{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 5;opacity:.7;}
+
+@media (max-width:880px){
+  .layout{grid-template-columns:1fr;}
+  .actions{margin-left:0;}
+}
+@media (max-width:480px){
+  .row{grid-template-columns:7.2rem minmax(0,1fr) 3.8rem;gap:.55rem;}
+  select{min-width:0;width:100%;}
+  .select{display:block;}
+  .controls label.ctl{flex:1 1 100%;}
+}
+@media (prefers-reduced-motion: reduce){
+  .dot,.dot .ring,.dot .core,.bar,.avg{transition:none !important;}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>How a sample gets chosen</h1>
+    <p class="lede">A population of 100 students, colored by class year. Choose a sampling method, draw a sample, and compare the sample's makeup with the population's.</p>
+  </header>
+
+  <section class="controls" aria-label="Simulation controls">
+    <label class="ctl">
+      <span class="cap">Sampling method</span>
+      <span class="select">
+        <select id="method">
+          <option value="srs">Simple random sample</option>
+          <option value="stratified">Stratified sampling</option>
+          <option value="cluster">Cluster sampling</option>
+          <option value="systematic">Systematic sampling</option>
+          <option value="convenience">Convenience sampling</option>
+        </select>
+      </span>
+    </label>
+    <fieldset class="seg">
+      <legend>Sample size</legend>
+      <div class="opts">
+        <label><input type="radio" name="n" value="10" checked><span class="opt">n = 10</span></label>
+        <label><input type="radio" name="n" value="20"><span class="opt">n = 20</span></label>
+      </div>
+    </fieldset>
+    <div class="actions">
+      <button id="draw" class="primary" type="button">Draw a sample</button>
+      <button id="draw100" type="button">Draw 100 samples</button>
+      <button id="clear" class="quiet" type="button">Clear</button>
+    </div>
+  </section>
+
+  <div class="layout">
+    <figure class="field-wrap">
+      <svg id="field" viewBox="0 0 520 520" role="img" aria-label="Population of 100 students">
+        <g id="overlay"></g>
+        <g id="dots"></g>
+      </svg>
+      <figcaption class="legend" id="legend"></figcaption>
+      <p id="note" aria-live="polite"></p>
+    </figure>
+
+    <aside>
+      <section>
+        <h2 id="mTitle"></h2>
+        <p id="mHow"></p>
+        <h3>Similar or dissimilar groups?</h3>
+        <p id="mGroups"></p>
+        <h3>What to watch for</h3>
+        <p id="mWatch"></p>
+      </section>
+      <section>
+        <h2>Sample vs. population</h2>
+        <div id="bars"></div>
+        <p class="key">Colored bar: this sample. Dark line: the population. Diamond: the average across every sample drawn so far.</p>
+        <p id="verdict"></p>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<script>
+(function(){
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const N = 100;
+  const GROUPS = [
+    {name:'First-year', count:40},
+    {name:'Sophomore', count:30},
+    {name:'Junior', count:20},
+    {name:'Senior', count:10}
+  ];
+
+  const INFO = {
+    srs:{
+      title:'Simple random sample',
+      how:'Every student has the same chance of being chosen, and every possible group of n students is equally likely to become the sample. Think of drawing names from a well-mixed hat.',
+      groups:'No groups are used. The method ignores the colors entirely, so class years are scattered throughout the population and the sample lands wherever chance puts it.',
+      watch:'A single sample can overrepresent a class year or miss one completely, especially the small Senior group. Over many samples, the averages settle on the population values.'
+    },
+    stratified:{
+      title:'Stratified sampling',
+      how:'Sort the population into strata, then take a simple random sample from each stratum. Here each stratum gets a share of the sample that matches its share of the population.',
+      groups:'Similar within, different between. Everyone inside a stratum shares a class year (one color per box), and the strata differ from one another.',
+      watch:'Every sample matches the population proportions exactly, so no class year is ever left out or overrepresented. Which students are chosen inside each stratum is still random.'
+    },
+    cluster:{
+      title:'Cluster sampling',
+      how:'The population already comes in natural groups, here 10 course sections. Randomly choose whole sections and include every student in them.',
+      groups:'Dissimilar within, similar between. Each section is a mix of class years, ideally a small copy of the whole population, so the sections resemble one another.',
+      watch:'It is efficient, since you only visit a few sections, but the sample is only as representative as the sections that happen to be drawn. Notice how much the bars jump from one sample to the next.'
+    },
+    systematic:{
+      title:'Systematic sampling',
+      how:'Number the population in list order. Compute k = N ÷ n, choose a random starting point from 1 to k, then take every kth student after it.',
+      groups:'Groups are not used. What matters is the order of the list: if class year has nothing to do with position in the list, the sample behaves much like a random one.',
+      watch:'The list wraps in rows of 10, so k = 10 picks one entire column. If the list had a repeating pattern that lined up with k, every sample would share the same distortion.'
+    },
+    convenience:{
+      title:'Convenience sampling',
+      how:'Survey whoever is easiest to reach. Here, that means the students standing closest to the researcher in the bottom-left corner.',
+      groups:'The colors are not spread evenly. Students near the researcher tend to be upper-level, so the people who are easy to reach are not a typical slice of the population.',
+      watch:'Draw 100 samples. The average never moves toward the population values, because the method itself, not bad luck, keeps choosing the same kind of student. That is bias.'
+    }
+  };
+
+  // seeded RNG so the population layout is the same every visit
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const srand = mulberry32(1530);
+  function shuffle(arr, r){r=r||Math.random;const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+  const people = [];
+  GROUPS.forEach((g,gi)=>{for(let k=0;k<g.count;k++) people.push({id:people.length,g:gi});});
+  const allIds = people.map(p=>p.id);
+  const baseOrder = shuffle(allIds, srand);
+  const clusterOrder = shuffle(allIds, srand);
+  const clusters = [];
+  for(let c=0;c<10;c++) clusters.push(clusterOrder.slice(c*10,c*10+10));
+  const convBias = [1, 0.62, 0.3, 0];
+  const convScore = people.map(p=>convBias[p.g] + srand()*0.85);
+
+  function gridPos(order,x0,y0,cell){
+    const pos={};
+    order.forEach((id,i)=>{pos[id]={x:x0+(i%10)*cell+cell/2,y:y0+Math.floor(i/10)*cell+cell/2,label:i+1};});
+    return pos;
+  }
+
+  const CONV = {x0:60,y0:20,cell:44};
+  const CONV_ORIGIN = {x:CONV.x0, y:CONV.y0+10*CONV.cell};
+
+  const LAYOUTS = {
+    srs(){ return {pos:gridPos(baseOrder,40,40,44), overlay:''}; },
+    systematic(){ return {pos:gridPos(baseOrder,40,40,44), overlay:'', nums:true}; },
+    stratified(){
+      const pos={}, cell=40, x0=100; let y=30, ov='';
+      GROUPS.forEach((g,gi)=>{
+        const mem = baseOrder.filter(id=>people[id].g===gi);
+        const rows = Math.ceil(mem.length/10), h = rows*cell;
+        mem.forEach((id,i)=>{pos[id]={x:x0+(i%10)*cell+cell/2,y:y+Math.floor(i/10)*cell+cell/2};});
+        ov += `<rect class="box" x="${x0-6}" y="${y-4}" width="${10*cell+12}" height="${h+8}" rx="10"/>`;
+        ov += `<text class="olabel" x="${x0-14}" y="${y+h/2-3}" text-anchor="end">${g.name}</text>`;
+        ov += `<text class="osub" x="${x0-14}" y="${y+h/2+13}" text-anchor="end">Stratum of ${g.count}</text>`;
+        y += h + 16;
+      });
+      return {pos, overlay:ov};
+    },
+    cluster(){
+      const pos={}, bw=92, bh=218, gap=8, x0=14, y0=30; let ov='';
+      clusters.forEach((mem,c)=>{
+        const bx = x0+(c%5)*(bw+gap), by = y0+Math.floor(c/5)*(bh+16);
+        ov += `<g class="cbox" data-c="${c}"><rect class="box" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="10"/><text class="olabel small" x="${bx+bw/2}" y="${by+19}" text-anchor="middle">Section ${c+1}</text></g>`;
+        mem.forEach((id,j)=>{pos[id]={x:bx+10+(j%2)*36+18,y:by+28+Math.floor(j/2)*36+18};});
+      });
+      return {pos, overlay:ov};
+    },
+    convenience(){
+      const {x0,y0,cell} = CONV, cells=[];
+      for(let i=0;i<100;i++){
+        const cx=x0+(i%10)*cell+cell/2, cy=y0+Math.floor(i/10)*cell+cell/2;
+        cells.push({cx,cy,d:Math.hypot(cx-CONV_ORIGIN.x, cy-CONV_ORIGIN.y)});
+      }
+      cells.sort((a,b)=>a.d-b.d);
+      const byScore = allIds.slice().sort((a,b)=>convScore[a]-convScore[b]);
+      const pos={};
+      byScore.forEach((id,i)=>{pos[id]={x:cells[i].cx,y:cells[i].cy,d:cells[i].d};});
+      const rx=40, ry=478;
+      const ov = `<g class="researcher" aria-hidden="true"><circle cx="${rx}" cy="${ry-9}" r="6"/><path d="M${rx-10} ${ry+14} Q${rx-10} ${ry-1} ${rx} ${ry-1} Q${rx+10} ${ry-1} ${rx+10} ${ry+14} Z"/></g><text class="osub" x="${rx+18}" y="${ry+12}">Researcher</text>`;
+      return {pos, overlay:ov};
+    }
+  };
+  const LAY = {};
+  Object.keys(LAYOUTS).forEach(k=>LAY[k]=LAYOUTS[k]());
+
+  // build dots
+  const svg = document.getElementById('field');
+  const dotsG = document.getElementById('dots');
+  const overlay = document.getElementById('overlay');
+  const dotEls = people.map(p=>{
+    const g = document.createElementNS(SVGNS,'g'); g.setAttribute('class','dot');
+    const core = document.createElementNS(SVGNS,'circle'); core.setAttribute('r','13'); core.setAttribute('class','core'); core.style.fill=`var(--g${p.g})`;
+    const ring = document.createElementNS(SVGNS,'circle'); ring.setAttribute('r','17.5'); ring.setAttribute('class','ring');
+    const t = document.createElementNS(SVGNS,'text'); t.setAttribute('class','num');
+    g.append(core, ring, t);
+    g.style.transform = 'translate(260px,260px)';
+    dotsG.append(g);
+    return {g,core,ring,t};
+  });
+
+  // legend
+  document.getElementById('legend').innerHTML = GROUPS.map((g,gi)=>`<span><span class="sw" style="background:var(--g${gi})"></span>${g.name} (${g.count})</span>`).join('');
+
+  // results rows, built once and updated in place
+  const barsEl = document.getElementById('bars');
+  const rows = GROUPS.map((g,gi)=>{
+    const row = document.createElement('div'); row.className='row';
+    const pop = g.count/N*100;
+    row.innerHTML = `<div class="rlabel"><span class="sw" style="background:var(--g${gi})"></span>${g.name} <span class="pop">${pop}%</span></div>
+      <div class="track" aria-hidden="true"><div class="bar" style="background:var(--g${gi})"></div><div class="tick" style="left:${pop}%"></div><div class="avg" hidden></div></div>
+      <div class="val"><span class="sv">–</span><small class="av"></small></div>`;
+    barsEl.append(row);
+    return {bar:row.querySelector('.bar'), avg:row.querySelector('.avg'), sv:row.querySelector('.sv'), av:row.querySelector('.av')};
+  });
+
+  const state = {method:'srs', n:10, last:null, tally:{count:0,sums:[0,0,0,0]}};
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const noteEl = document.getElementById('note');
+  const verdictEl = document.getElementById('verdict');
+
+  function sample(){
+    const n = state.n, m = state.method;
+    if(m==='srs'){
+      return {ids:shuffle(allIds).slice(0,n), note:`Each of the 100 students had an equal chance. These ${n} were drawn at random, like names from a hat.`};
+    }
+    if(m==='stratified'){
+      const ids=[], parts=[];
+      GROUPS.forEach((g,gi)=>{
+        const k = g.count*n/N;
+        ids.push(...shuffle(people.filter(p=>p.g===gi).map(p=>p.id)).slice(0,k));
+        parts.push(`${k} ${g.name}`);
+      });
+      const list = parts.slice(0,-1).join(', ') + ', and ' + parts[parts.length-1];
+      return {ids, note:`Drew at random within each stratum: ${list}.`};
+    }
+    if(m==='cluster'){
+      const k = n/10;
+      const cs = shuffle([...Array(10).keys()]).slice(0,k).sort((a,b)=>a-b);
+      const ids = cs.flatMap(c=>clusters[c]);
+      const note = k===1
+        ? `Section ${cs[0]+1} was drawn at random. Every student in it is in the sample.`
+        : `Sections ${cs[0]+1} and ${cs[1]+1} were drawn at random. Every student in them is in the sample.`;
+      return {ids, clusters:cs, note};
+    }
+    if(m==='systematic'){
+      const k = N/n, start = 1+Math.floor(Math.random()*k), ids=[];
+      for(let p=start;p<=N;p+=k) ids.push(baseOrder[p-1]);
+      return {ids, note:`k = ${N} ÷ ${n} = ${k}. Random start: #${start}, then #${start+k}, #${start+2*k}, and every ${k}th student after that.`};
+    }
+    // convenience: nearest students, with a little day-to-day variation in who happens to be around
+    const pos = LAY.convenience.pos;
+    const ids = allIds.map(id=>({id,s:pos[id].d+Math.random()*30})).sort((a,b)=>a.s-b.s).slice(0,n).map(o=>o.id);
+    return {ids, note:`Took the ${n} students standing closest to the researcher. No chance mechanism was involved.`};
+  }
+
+  function props(ids){
+    const c=[0,0,0,0]; ids.forEach(id=>c[people[id].g]++);
+    return c.map(v=>v/ids.length);
+  }
+
+  function clearSample(){
+    svg.classList.remove('sampled');
+    dotEls.forEach(d=>d.g.classList.remove('picked'));
+    overlay.querySelectorAll('.chosen').forEach(e=>e.classList.remove('chosen'));
+    const r = overlay.querySelector('.reach'); if(r) r.remove();
+    noteEl.textContent = `Press “Draw a sample” to choose ${state.n} students using ${INFO[state.method].title.toLowerCase()}.`;
+  }
+
+  function showSample(res, animate){
+    dotEls.forEach(d=>{d.g.classList.remove('picked'); d.ring.style.transitionDelay='0ms'; d.core.style.transitionDelay='0ms';});
+    overlay.querySelectorAll('.chosen').forEach(e=>e.classList.remove('chosen'));
+    svg.getBoundingClientRect(); // restart the pick animation
+    svg.classList.add('sampled');
+    const stagger = animate && !reduceMotion.matches;
+    res.ids.forEach((id,i)=>{
+      const d = dotEls[id];
+      d.ring.style.transitionDelay = stagger ? (i*45)+'ms' : '0ms';
+      d.g.classList.add('picked');
+    });
+    if(res.clusters){
+      res.clusters.forEach(c=>{const b=overlay.querySelector(`.cbox[data-c="${c}"]`); if(b) b.classList.add('chosen');});
+    }
+    const oldReach = overlay.querySelector('.reach'); if(oldReach) oldReach.remove();
+    if(state.method==='convenience'){
+      const pos = LAY.convenience.pos;
+      const r = Math.max(...res.ids.map(id=>pos[id].d)) + 22;
+      const c = document.createElementNS(SVGNS,'circle');
+      c.setAttribute('class','reach'); c.setAttribute('cx',CONV_ORIGIN.x); c.setAttribute('cy',CONV_ORIGIN.y); c.setAttribute('r',r);
+      overlay.append(c);
+    }
+    noteEl.textContent = res.note;
+  }
+
+  function addToTally(res){
+    res.props = props(res.ids);
+    state.tally.count++;
+    res.props.forEach((p,i)=>state.tally.sums[i]+=p);
+    state.last = res;
+  }
+
+  function resetTally(){ state.tally={count:0,sums:[0,0,0,0]}; state.last=null; }
+
+  function renderResults(){
+    const t = state.tally, last = state.last;
+    rows.forEach((r,gi)=>{
+      const s = last ? last.props[gi]*100 : 0;
+      r.bar.style.width = s+'%';
+      r.sv.textContent = last ? Math.round(s)+'%' : '–';
+      if(t.count>1){
+        const a = t.sums[gi]/t.count*100;
+        r.avg.hidden=false; r.avg.style.left=a+'%';
+        r.av.textContent = `avg ${Math.round(a)}%`;
+      } else { r.avg.hidden=true; r.av.textContent=''; }
+    });
+    if(t.count===0){
+      verdictEl.textContent = 'Draw a sample to compare it with the population.';
+    } else if(t.count<20){
+      verdictEl.textContent = `Samples drawn: ${t.count}. Draw more (try 100 at once) to see where the averages settle.`;
+    } else {
+      const maxDev = Math.max(...GROUPS.map((g,gi)=>Math.abs(t.sums[gi]/t.count - g.count/N)))*100;
+      verdictEl.textContent = maxDev>=6
+        ? `After ${t.count} samples, the averages are still off by as much as ${Math.round(maxDev)} percentage points. Drawing more samples won't fix this: the method is biased.`
+        : `After ${t.count} samples, the averages sit close to the population values. Individual samples vary, but on average this method gets it right.`;
+    }
+  }
+
+  function renderInfo(){
+    const info = INFO[state.method];
+    document.getElementById('mTitle').textContent = info.title;
+    document.getElementById('mHow').textContent = info.how;
+    document.getElementById('mGroups').textContent = info.groups;
+    document.getElementById('mWatch').textContent = info.watch;
+    svg.setAttribute('aria-label', `Population of 100 students arranged for ${info.title.toLowerCase()}`);
+  }
+
+  function setMethod(m){
+    state.method = m;
+    const lay = LAY[m];
+    overlay.innerHTML = lay.overlay;
+    if(!reduceMotion.matches && overlay.animate){
+      overlay.animate([{opacity:0},{opacity:1}],{duration:450,delay:350,fill:'backwards'});
+    }
+    dotEls.forEach((d,id)=>{
+      const p = lay.pos[id];
+      d.g.style.transform = `translate(${p.x}px,${p.y}px)`;
+      d.t.textContent = p.label || '';
+    });
+    svg.classList.toggle('show-nums', !!lay.nums);
+    resetTally(); clearSample(); renderInfo(); renderResults();
+  }
+
+  document.getElementById('method').addEventListener('change', e=>setMethod(e.target.value));
+  document.querySelectorAll('input[name="n"]').forEach(r=>r.addEventListener('change', e=>{
+    state.n = +e.target.value; resetTally(); clearSample(); renderResults();
+  }));
+  document.getElementById('draw').addEventListener('click', ()=>{
+    const res = sample(); addToTally(res); showSample(res, true); renderResults();
+  });
+  document.getElementById('draw100').addEventListener('click', ()=>{
+    let res; for(let i=0;i<100;i++){ res = sample(); addToTally(res); }
+    showSample(res, false); renderResults();
+  });
+  document.getElementById('clear').addEventListener('click', ()=>{ resetTally(); clearSample(); renderResults(); });
+
+  // initial: dots gather from the center into the first layout
+  document.getElementById('method').value = 'srs';
+  svg.getBoundingClientRect();
+  requestAnimationFrame(()=>setMethod('srs'));
+})();
+</script>
+</body>
+</html>
